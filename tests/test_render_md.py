@@ -66,6 +66,19 @@ class TestRenderMd(unittest.TestCase):
         ]
         mock_file.assert_has_calls(expected_file_calls, any_order=True)
 
+    @patch('builtins.print')
+    def test_warning_for_undefined_variables(self, mock_print):
+        template_content = "Hello, {{ name }} and {{ undefined_variable }}!"
+        variables = {'name': 'John Doe'}
+
+        with patch('builtins.open', mock_open(read_data=template_content)):
+            render_template('dummy_path', variables)
+
+        # Check if the print function was called with the expected warning message
+        mock_print.assert_called_with(
+            "Warning: Undefined variables in dummy_path: undefined_variable"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

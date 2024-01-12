@@ -2,6 +2,12 @@ import os
 import yaml
 from jinja2 import Template
 import argparse
+import re
+
+def find_template_variables(template_content):
+    # Regex to find Jinja2 placeholders (e.g., {{ var }})
+    pattern = r'\{\{ *([a-zA-Z0-9_]+) *\}\}'
+    return set(re.findall(pattern, template_content))
 
 def render_template(template_path, variables):
     try:
@@ -9,6 +15,14 @@ def render_template(template_path, variables):
             template_content = file.read()
     except FileNotFoundError:
         raise FileNotFoundError(f"Template file not found: {template_path}")
+
+    # Find variables used in the template
+    template_vars = find_template_variables(template_content)
+
+    # Warn if any template variable is not defined in YAML variables
+    undefined_vars = template_vars - variables.keys()
+    if undefined_vars:
+        print(f"Warning: Undefined variables in {template_path}: {', '.join(undefined_vars)}")
 
     template = Template(template_content)
     return template.render(variables)
