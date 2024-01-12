@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, mock_open, call
-from md_jinja.render_md import render_template, process_directory, main
+from md_jinja.render_md import render_template, process_directory, load_variables, main
 import sys
 
 
@@ -78,6 +78,36 @@ class TestRenderMd(unittest.TestCase):
         mock_print.assert_called_with(
             "Warning: Undefined variables in dummy_path: undefined_variable"
         )
+
+    @patch('os.makedirs')
+    @patch('os.walk')
+    @patch('builtins.open', new_callable=mock_open, read_data='Hello, {{ name }}!')
+    def test_multiple_template_directories(self, mock_file, mock_walk, mock_makedirs):
+        mock_walk.side_effect = [
+            [('/path/to/templates1', [], ['template1.md']),],
+            [('/path/to/templates2', [], ['template2.md']),]
+        ]
+
+        variables = {'name': 'John Doe'}
+        process_directory('/path/to/templates1', '/path/to/output', variables)
+        process_directory('/path/to/templates2', '/path/to/output', variables)
+
+        # Add assertions to check if files are opened/written correctly
+        # The mock_makedirs should be called to create directories
+        mock_makedirs.assert_called()
+
+    @patch('os.walk')
+    @patch('builtins.open', new_callable=mock_open, read_data='name: John Doe')
+    def test_multiple_variable_directories(self, mock_file, mock_walk):
+        mock_walk.side_effect = [
+            [('/path/to/variables1', [], ['vars1.yaml']),],
+            [('/path/to/variables2', [], ['vars2.yaml']),]
+        ]
+
+        expected_variables = {'name': 'John Doe'}
+        loaded_variables = load_variables(['/path/to/variables1', '/path/to/variables2'])
+
+        self.assertEqual(loaded_variables, expected_variables)
 
 
 if __name__ == "__main__":

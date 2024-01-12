@@ -68,24 +68,36 @@ def process_directory(input_dir, output_dir, variables):
                 with open(output_path, 'w') as output_file:
                     output_file.write(rendered_content)
 
+def load_variables(variable_dirs):
+    variables = {}
+    for var_dir in variable_dirs:
+        if var_dir:  # Check to avoid empty strings
+            for root, _, files in os.walk(var_dir):
+                for file in files:
+                    if file.endswith('.yaml') or file.endswith('.yml'):
+                        with open(os.path.join(root, file), 'r') as yaml_file:
+                            variables.update(yaml.safe_load(yaml_file))
+    return variables
+
 def main():
     parser = argparse.ArgumentParser(description="Render Markdown templates with variables from YAML files.")
-    parser.add_argument('template_dir', help="Directory containing Markdown template files.")
-    parser.add_argument('variable_dir', help="Directory containing YAML files with variables.")
+    parser.add_argument('template_dirs', help='A semicolon-separated string of directories containing Markdown template files. Example: "dir1;dir2;dir3"')
+    parser.add_argument('variable_dirs', help='A semicolon-separated string of directories containing YAML files with variables. Example: "vardir1;vardir2;vardir3"')
     parser.add_argument('output_dir', help="Directory where rendered files will be saved.")
 
     args = parser.parse_args()
 
-    # Load variables from YAML files
-    variables = {}
-    for root, _, files in os.walk(args.variable_dir):
-        for file in files:
-            if file.endswith('.yaml') or file.endswith('.yml'):
-                with open(os.path.join(root, file), 'r') as yaml_file:
-                    variables.update(yaml.safe_load(yaml_file))
+    # Split the directory arguments into separate paths
+    template_dirs = args.template_dirs.strip('"').split(';')
+    variable_dirs = args.variable_dirs.strip('"').split(';')
 
-    # Process the template directory
-    process_directory(args.template_dir, args.output_dir, variables)
+    # Load variables from the provided variable directories
+    variables = load_variables(variable_dirs)
+
+    # Process each template directory
+    for template_dir in template_dirs:
+        if template_dir:  # Check to avoid empty strings
+            process_directory(template_dir, args.output_dir, variables)
 
 if __name__ == "__main__":
     main()
