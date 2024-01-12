@@ -14,22 +14,42 @@ def render_template(template_path, variables):
     return template.render(variables)
 
 def process_directory(input_dir, output_dir, variables):
+    """
+    Process all Markdown files in a given directory, including its subdirectories,
+    and render them using the provided variables. The rendered files are saved in
+    a corresponding structure in the output directory.
+
+    Args:
+        input_dir (str): The path to the directory containing Markdown template files.
+        output_dir (str): The path to the directory where rendered files will be saved.
+        variables (dict): A dictionary containing variables for rendering the templates.
+
+    This function walks through the input directory, processes each Markdown file
+    found, and saves the rendered content in the output directory while preserving
+    the directory structure.
+    """
     for root, dirs, files in os.walk(input_dir):
-        # Determine the relative path to create a similar structure in output directory
+        # Determine the relative path from the input directory to the current directory
+        # This relative path is used to maintain the same directory structure in the output
         rel_path = os.path.relpath(root, input_dir)
+
+        # Construct the corresponding output path
         output_root = os.path.join(output_dir, rel_path)
 
-        # Ensure the output directory exists
+        # Ensure the output directory exists, creating it if necessary
         os.makedirs(output_root, exist_ok=True)
 
-        # Process each Markdown file
+        # Process each Markdown file in the current directory
         for file in files:
             if file.endswith('.md'):
+                # Construct the full paths for the input and output files
                 template_path = os.path.join(root, file)
                 output_path = os.path.join(output_root, file)
 
-                # Render and write the template
+                # Render the template with the provided variables
                 rendered_content = render_template(template_path, variables)
+
+                # Write the rendered content to the corresponding file in the output directory
                 with open(output_path, 'w') as output_file:
                     output_file.write(rendered_content)
 
