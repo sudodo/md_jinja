@@ -28,6 +28,7 @@ def process_directory(input_dir, output_dir, variables):
     found, and saves the rendered content in the output directory while preserving
     the directory structure.
     """
+    # TODO: This method is not tested. Instead, I added inline comments to explain what it does. Build a test case based on these comments.
     for root, dirs, files in os.walk(input_dir):
         # Determine the relative path from the input directory to the current directory
         # This relative path is used to maintain the same directory structure in the output
