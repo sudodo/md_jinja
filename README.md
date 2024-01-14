@@ -66,6 +66,12 @@ pip install Jinja2 PyYAML
    python render_md.py path/to/template_dir path/to/variable_dir path/to/output_dir
    ```
 
+   If you have multiple variable directories, separate them with a semicolon `;`.
+
+   ```bash
+   python render_md.py path/to/template_dir "path/to/variable_dir1;path/to/variable_dir2" path/to/output_dir
+   ```
+
    The script will process each Markdown template, substituting the variables with values from the YAML files, and save the rendered documents in the specified output directory.
 
 ## Example
