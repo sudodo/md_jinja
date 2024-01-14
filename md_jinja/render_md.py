@@ -79,6 +79,10 @@ def load_variables(variable_dirs):
                             variables.update(yaml.safe_load(yaml_file))
     return variables
 
+def is_directory(path):
+    if not os.path.isdir(path):
+        raise NotADirectoryError(f"Provided path is not a directory: {path}")
+
 def main():
     parser = argparse.ArgumentParser(description="Render Markdown templates with variables from YAML files.")
     parser.add_argument('template_dirs', help='A semicolon-separated string of directories containing Markdown template files. Example: "dir1;dir2;dir3"')
@@ -90,6 +94,11 @@ def main():
     # Split the directory arguments into separate paths
     template_dirs = args.template_dirs.strip('"').split(';')
     variable_dirs = args.variable_dirs.strip('"').split(';')
+
+    # Check if template_dirs and variable_dirs are actual directories
+    for dir in template_dirs + variable_dirs:
+        if dir:  # Skip empty strings
+            is_directory(dir)
 
     # Load variables from the provided variable directories
     variables = load_variables(variable_dirs)
