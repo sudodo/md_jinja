@@ -56,7 +56,7 @@ def process_directory(input_dir, output_dir, variables):
 
         # Process each Markdown file in the current directory
         for file in files:
-            if file.endswith('.md'):
+            if file.endswith('.md') or file.endswith('.yaml') or file.endswith('.yml'):
                 # Construct the full paths for the input and output files
                 template_path = os.path.join(root, file)
                 output_path = os.path.join(output_root, file)
