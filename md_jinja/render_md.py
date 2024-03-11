@@ -9,12 +9,37 @@ def find_template_variables(template_content):
     pattern = r'\{\{ *([a-zA-Z0-9_]+) *\}\}'
     return set(re.findall(pattern, template_content))
 
+def include_external_files(template_content: str) -> str:
+    """
+    Search for special syntax {{{ /path/to/file }}} in the template content
+    and replace it with the content of the specified file.
+
+    Args:
+        template_content (str): The content of the template being processed.
+
+    Returns:
+        str: The template content with included files content.
+    """
+    pattern = r'\{\{\{ *(.*?) *\}\}\}'  # Regex to find {{{ path/to/file }}}
+    def replace_with_file_content(match):
+        file_path = match.group(1)
+        try:
+            with open(file_path, 'r') as file:
+                return file.read()
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Included file not found: {file_path}")
+
+    return re.sub(pattern, replace_with_file_content, template_content)
+
 def render_template(template_path, variables):
     try:
         with open(template_path, 'r') as file:
             template_content = file.read()
     except FileNotFoundError:
         raise FileNotFoundError(f"Template file not found: {template_path}")
+
+    # Process file inclusions
+    template_content = include_external_files(template_content)
 
     # Find variables used in the template
     template_vars = find_template_variables(template_content)

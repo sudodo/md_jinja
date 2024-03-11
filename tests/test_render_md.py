@@ -2,6 +2,9 @@ import unittest
 from unittest.mock import patch, mock_open, call
 from md_jinja.render_md import render_template, process_directory, load_variables, main
 import sys
+import unittest
+from unittest.mock import patch, mock_open
+from md_jinja.render_md import render_template
 
 
 def _test_data_dir():
@@ -35,7 +38,7 @@ class TestRenderMd(unittest.TestCase):
     @patch('md_jinja.render_md.render_template', return_value='rendered content')
     @patch('builtins.open', new_callable=mock_open)
     def test_process_directory(self, mock_file, mock_render_template, mock_walk, mock_makedirs):
-        return 
+        return
         # TODO: Fix this test
         mock_walk.return_value = [
             ('/path/to/templates', ['sub_dir1', 'sub_dir2'], ['template1.md', 'template2.md']),
@@ -108,6 +111,49 @@ class TestRenderMd(unittest.TestCase):
         loaded_variables = load_variables(['/path/to/variables1', '/path/to/variables2'])
 
         self.assertEqual(loaded_variables, expected_variables)
+
+class TestIncludeExternalFiles(unittest.TestCase):
+    @patch('builtins.open', new_callable=mock_open)
+    def test_include_external_files_success(self, mock_file):
+        """
+        Test that external files are correctly included in the template.
+        """
+        # Mock the content of the main template and the included file
+        main_template_content = "Hello {{{ /path/to/included_file.md }}}!"
+        included_file_content = "World"
+
+        # Setup the mock to return different content based on the file path
+        mock_file.side_effect = [
+            mock_open(read_data=main_template_content).return_value,  # Main template
+            mock_open(read_data=included_file_content).return_value   # Included file
+        ]
+
+        # Call the function under test
+        output = render_template("dummy_template_path", {})
+
+        # Verify the output
+        self.assertEqual(output, "Hello World!")
+
+        # Verify that both files were opened: the template and the included file
+        mock_file.assert_any_call("dummy_template_path", 'r')
+        mock_file.assert_any_call("/path/to/included_file.md", 'r')
+
+    @patch('builtins.open', new_callable=mock_open, read_data="Hello {{{ /path/to/nonexistent_file.md }}}!")
+    @patch('md_jinja.render_md.include_external_files')
+    def test_include_external_files_file_not_found(self, mock_include_external_files, mock_file_open):
+        """
+        Test that a FileNotFoundError is raised when the included file does not exist.
+        """
+        # Configure the mock for include_external_files to raise FileNotFoundError
+        # when it tries to include the non-existent file
+        mock_include_external_files.side_effect = FileNotFoundError("Included file not found: /path/to/nonexistent_file.md")
+
+        with self.assertRaises(FileNotFoundError) as context:
+            render_template("dummy_template_path", {})
+
+        # Check if the error message is as expected
+        self.assertIn("Included file not found: /path/to/nonexistent_file.md", str(context.exception))
+
 
 
 if __name__ == "__main__":
