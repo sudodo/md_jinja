@@ -9,7 +9,7 @@ def find_template_variables(template_content):
     pattern = r'\{\{ *([a-zA-Z0-9_]+) *\}\}'
     return set(re.findall(pattern, template_content))
 
-def include_external_files(template_content: str) -> str:
+def include_external_files(template_content: str, template_path: str) -> str:
     """
     Search for special syntax {{{ /path/to/file }}} in the template content
     and replace it with the content of the specified file.
@@ -20,14 +20,17 @@ def include_external_files(template_content: str) -> str:
     Returns:
         str: The template content with included files content.
     """
+    template_dir = os.path.dirname(template_path)
     pattern = r'\{\{\{ *(.*?) *\}\}\}'  # Regex to find {{{ path/to/file }}}
     def replace_with_file_content(match):
         file_path = match.group(1)
+        # Compute the absolute path if the file_path is relative
+        absolute_file_path = os.path.join(template_dir, file_path)
         try:
-            with open(file_path, 'r') as file:
+            with open(absolute_file_path, 'r') as file:
                 return file.read()
         except FileNotFoundError:
-            raise FileNotFoundError(f"Included file not found: {file_path}")
+            raise FileNotFoundError(f"Included file not found: {absolute_file_path}")
 
     return re.sub(pattern, replace_with_file_content, template_content)
 
@@ -39,7 +42,7 @@ def render_template(template_path, variables):
         raise FileNotFoundError(f"Template file not found: {template_path}")
 
     # Process file inclusions
-    template_content = include_external_files(template_content)
+    template_content = include_external_files(template_content, template_path)
 
     # Find variables used in the template
     template_vars = find_template_variables(template_content)
@@ -111,14 +114,14 @@ def is_directory(path):
 def main():
     parser = argparse.ArgumentParser(description="Render Markdown templates with variables from YAML files.")
     parser.add_argument('template_dirs', help='A semicolon-separated string of directories containing Markdown template files. Example: "dir1;dir2;dir3"')
-    parser.add_argument('variable_dirs', help='A semicolon-separated string of directories containing YAML files with variables. Example: "vardir1;vardir2;vardir3"')
+    parser.add_argument("-v",'--variable_dirs', help='A semicolon-separated string of directories containing YAML files with variables. Example: "vardir1;vardir2;vardir3"')
     parser.add_argument('output_dir', help="Directory where rendered files will be saved.")
 
     args = parser.parse_args()
 
     # Split the directory arguments into separate paths
     template_dirs = args.template_dirs.strip('"').split(';')
-    variable_dirs = args.variable_dirs.strip('"').split(';')
+    variable_dirs = args.variable_dirs.strip('"').split(';') if args.variable_dirs else []
 
     # Check if template_dirs and variable_dirs are actual directories
     for dir in template_dirs + variable_dirs:
