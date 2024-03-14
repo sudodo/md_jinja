@@ -9,4 +9,8 @@ setup(
             "md_jinja = md_jinja.render_md:main"
         ]
     },
+    install_requires=[
+        'pyyaml',
+        'Jinja2',
+    ],
 )
