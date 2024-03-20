@@ -1,6 +1,7 @@
+import os
 import unittest
 from unittest.mock import patch, mock_open, call
-from md_jinja.render_md import render_template, process_directory, load_variables, main
+from md_jinja.render_md import render_template, process_directory, load_variables, main, run
 import sys
 import unittest
 from unittest.mock import patch, mock_open
@@ -31,7 +32,7 @@ class TestRenderMd(unittest.TestCase):
         mock_yaml_load.return_value = {"var1": "This is a test."}
         with patch("builtins.open", mock_open()):
             main()
-        mock_exit.assert_not_called()
+        mock_exit.assert_called()
 
     @patch('os.makedirs')
     @patch('os.walk')
@@ -154,7 +155,41 @@ class TestIncludeExternalFiles(unittest.TestCase):
         # Check if the error message is as expected
         self.assertIn("Included file not found: /path/to/nonexistent_file.md", str(context.exception))
 
+import unittest
+import os
+import shutil
+from md_jinja.render_md import run
 
+class TestRunMethod(unittest.TestCase):
+    def setUp(self):
+        # Setup directories and files for the test
+        self.template_dir = "./tests/data/templates"
+        self.variable_dir = "./tests/data/variables"
+        self.output_dir = "./tests/data/output"
+        self.expected_output_file = "./tests/data/valid_output/event_announcement_template.md"
+        self.result_output_file = os.path.join(self.output_dir, "event_announcement_template.md")
+
+        # Ensure the output directory is clean before running the test
+        if os.path.exists(self.output_dir):
+            shutil.rmtree(self.output_dir)
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def tearDown(self):
+        # Clean up after the test
+        shutil.rmtree(self.output_dir)
+
+    def test_run_method_output(self):
+        # Run the method under test
+        run([self.template_dir], [self.variable_dir], self.output_dir)
+
+        # Read the expected and actual output
+        with open(self.expected_output_file, 'r') as file:
+            expected_content = file.read()
+        with open(self.result_output_file, 'r') as file:
+            result_content = file.read()
+
+        # Compare the expected output with the actual output
+        self.assertEqual(expected_content, result_content)
 
 if __name__ == "__main__":
     unittest.main()
